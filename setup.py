@@ -17,13 +17,13 @@ def getVersion():
 
 setup(
     python_requires=">=3.8",
-    name="pymdmix-plugin-template",
+    name="pymdmix-project",
     version=getVersion(),
-    description="Plugin template for kick-starting a new project",
+    description="pymdmix project plugin",
     author="ggutierrez-bio",
     author_email="",
-    url="https://github.com/ggutierrez-bio/mdmix4",
-    data_files=[("pymdmix", ["defaults/pymdmix_plugin_template.yml"])],
-    packages=["pymdmix_plugin_template"],
+    url="https://github.com/ggutierrez-bio/mdmix4/pymdmix-project",
+    data_files=[("pymdmix", ["defaults/pymdmix_project.yml"])],
+    packages=["pymdmix_project"],
     install_requires=getRequirements(),
 )

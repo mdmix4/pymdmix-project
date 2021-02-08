@@ -1,9 +1,9 @@
 from pymdmix_core.plugin import Plugin
 
 
-class PluginTemplate(Plugin):
+class ProjectPlugin(Plugin):
 
-    NAME = "plugin_template"
+    NAME = "project"
 
     def __init__(self) -> None:
         super().__init__()
