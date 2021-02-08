@@ -1,0 +1,1 @@
+pymdmix-core @ https://github.com/mdmix4/pymdmix-core/archive/master.zip
