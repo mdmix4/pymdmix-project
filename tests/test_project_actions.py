@@ -8,10 +8,6 @@ from pymdmix_project.project import Project
 from .conftest import run_command
 
 
-# TODO:
-# test projects can be deleted in bulk keeping and deleting the project folders
-
-
 @pytest.mark.parametrize("format,dump", [("yaml", yaml.dump), ("json", json.dump)])
 def test_project_create_from_file(format, dump, tmpdir):
     """
