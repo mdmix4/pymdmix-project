@@ -1,9 +1,9 @@
+import os
+import shutil
 from argparse import Namespace
 from sqlalchemy import Column, String
 from pymdmix_core.orm import BaseModel
-from pymdmix_core.plugin.crud import CRUDPlugin
-from pymdmix_core.plugin.crud import ActionCreate
-
+from pymdmix_core.plugin.crud import CRUDPlugin, ActionCreate, ActionDelete, parse_file_from_args
 
 
 class ActionCreateProject(ActionCreate):
@@ -16,6 +16,22 @@ class ActionCreateProject(ActionCreate):
 
     def run(self, args: Namespace):
         # create the project dir and if it work fine, then put it in the database
+        super().run(args)
+
+
+class ActionDeleteProject(ActionDelete):
+
+    def init_parser(self):
+        super().init_parser()
+        self.parser.add_argument("--remove-data", action="store_true")
+
+    def run(self, args: Namespace) -> None:
+        if args.remove_data:
+            session = self.parent_plugin.session
+            model_class: Project = self.parent_plugin.CLASS
+            query = session.query(model_class).filter(model_class.id.in_(args.id))
+            for target in query.all():
+                shutil.rmtree(target.path)
         super().run(args)
 
 
@@ -33,3 +49,24 @@ class ProjectPlugin(CRUDPlugin):
 
     NAME = "project"
     CLASS = Project
+
+    def factory(self, args: Namespace) -> Project:
+
+        fields = {
+            "id": args.name,
+            "path": args.path if args.path is not None else os.path.join(os.getcwd(), args.name),
+            "description": args.description
+        } if args.name is not None else parse_file_from_args(args)
+
+        if fields is not None:
+            fields["description"] = args.description
+            os.makedirs(fields["path"], exist_ok=True)
+            model = self.CLASS(**fields)
+            self.session.add(model)
+            self.session.commit()
+            return model
+
+    def init_actions(self, action_subparser):
+        super().init_actions(action_subparser)
+        self.register_action(ActionCreateProject(action_subparser, self))
+        self.register_action(ActionDeleteProject(action_subparser, self))
