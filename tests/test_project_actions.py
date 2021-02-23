@@ -4,10 +4,11 @@ import os
 import pytest
 
 from pymdmix_core.orm import SQL_SESSION
-from pymdmix_project.project import Project
-from .conftest import run_command
+from pymdmix_project.project import Project, ProjectPlugin
+from .conftest import run_command, get_plugin_manager, db_patch
 
 
+@db_patch()
 @pytest.mark.parametrize("format,dump", [("yaml", yaml.dump), ("json", json.dump)])
 def test_project_create_from_file(format, dump, tmpdir):
     """
@@ -25,15 +26,20 @@ def test_project_create_from_file(format, dump, tmpdir):
     filename = os.path.join(tmpdir, f"{name}.{format}")
     with open(filename, 'w') as f:
         dump(fields, f)
+    plugin_manager = get_plugin_manager()
+    plugin: ProjectPlugin = plugin_manager.plugins["project"]
+    session = plugin.session
 
-    run_command(command=["project", "create", f"--{format}", filename])
+    run_command(f"project create --{format} {filename}", plugin_manager)
     assert os.path.exists(path)
-    assert len(SQL_SESSION.query(Project).all()) == 1
-    run_command(command=["project", "delete", "--remove-data", name])
+    assert len(session.query(Project).all()) == 1
+
+    run_command(f"project delete --remove-data {name}", plugin_manager)
     assert os.path.exists(path) is False
-    assert len(SQL_SESSION.query(Project).all()) == 0
+    assert len(session.query(Project).all()) == 0
 
 
+@db_patch()
 def test_project_create_from_arguments(tmpdir):
     """
     Test:
@@ -42,14 +48,20 @@ def test_project_create_from_arguments(tmpdir):
     """
     name = "test_project"
     path = os.path.join(tmpdir, name)
-    run_command(command=["project", "create", "--name", name, "--path", path])
+    plugin_manager = get_plugin_manager()
+    plugin: ProjectPlugin = plugin_manager.plugins["project"]
+    session = plugin.session
+
+    run_command(f"project create --name {name} --path {path}", plugin_manager)
     assert os.path.exists(path)
-    assert len(SQL_SESSION.query(Project).all()) == 1
-    run_command(command=["project", "delete", name])
+    assert len(session.query(Project).all()) == 1
+
+    run_command(f"project delete {name}", plugin_manager)
     assert os.path.exists(path)
-    assert len(SQL_SESSION.query(Project).all()) == 0
+    assert len(session.query(Project).all()) == 0
 
 
+@db_patch()
 @pytest.mark.parametrize(
     "remove_data", [
         pytest.param(True, id="Remove data"),
@@ -65,16 +77,21 @@ def test_project_create_with_implicit_path(remove_data, tmpdir):
     cwd = os.getcwd()
     os.chdir(tmpdir)
     names = ["test_project1", "test_project2"]
+    plugin_manager = get_plugin_manager()
+    plugin: ProjectPlugin = plugin_manager.plugins["project"]
+    session = plugin.session
+
     for name in names:
-        run_command(command=["project", "create", "--name", name])
+        run_command(f"project create --name {name}", plugin_manager)
         assert os.path.exists(name)
-    assert len(SQL_SESSION.query(Project).all()) == 2
-    delete_command = ["project", "delete"]
+    assert len(session.query(Project).all()) == 2
+    
+    delete_command = ["project delete"]
     if remove_data:
         delete_command.append("--remove-data")
     delete_command += names
-    run_command(command=delete_command)
+    run_command(" ".join(delete_command), plugin_manager)
     for name in names:
         assert os.path.exists(name) != remove_data
-    assert len(SQL_SESSION.query(Project).all()) == 0
+    assert len(session.query(Project).all()) == 0
     os.chdir(cwd)
