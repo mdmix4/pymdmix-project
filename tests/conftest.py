@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
-from typing import List
 import shlex
 import sqlalchemy
 

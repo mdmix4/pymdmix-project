@@ -3,7 +3,6 @@ import json
 import os
 import pytest
 
-from pymdmix_core.orm import SQL_SESSION
 from pymdmix_project.project import Project, ProjectPlugin
 from .conftest import run_command, get_plugin_manager, db_patch
 
@@ -85,7 +84,7 @@ def test_project_create_with_implicit_path(remove_data, tmpdir):
         run_command(f"project create --name {name}", plugin_manager)
         assert os.path.exists(name)
     assert len(session.query(Project).all()) == 2
-    
+
     delete_command = ["project delete"]
     if remove_data:
         delete_command.append("--remove-data")
