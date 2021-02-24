@@ -14,10 +14,6 @@ class ActionCreateProject(ActionCreate):
         self.parser.add_argument("--path", "-p")
         self.parser.add_argument("--description", "-d")
 
-    def run(self, args: Namespace):
-        # create the project dir and if it work fine, then put it in the database
-        super().run(args)
-
 
 class ActionDeleteProject(ActionDelete):
 
@@ -41,8 +37,11 @@ class Project(BaseModel):
     description = Column(String(1024))
     path = Column(String(256))
 
+    def __str__(self):
+        return f"{self.id} @ {self.path}"
+
     def __repr__(self):
-        return f"Project: {self.id} @ {self.path}"
+        return f"Project: {self.id} @ {self.path}\n\t{self.description}"
 
 
 class ProjectPlugin(CRUDPlugin):
@@ -59,7 +58,8 @@ class ProjectPlugin(CRUDPlugin):
         } if args.name is not None else parse_file_from_args(args)
 
         if fields is not None:
-            fields["description"] = args.description
+            fields["description"] = args.description if fields.get("description") is None else fields["description"]
+            fields["path"] = os.path.abspath(fields["path"])
             os.makedirs(fields["path"], exist_ok=True)
             model = self.CLASS(**fields)
             self.session.add(model)
