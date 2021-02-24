@@ -12,7 +12,7 @@ def getRequirements():
 
 
 def getVersion():
-    return "0.0.1"
+    return "0.0.2"
 
 
 setup(
